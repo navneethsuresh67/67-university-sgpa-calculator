@@ -1,0 +1,468 @@
+"""
+67 University SGPA Calculator — Python Assignment
+BSc CS 2nd Year
+Concepts: Functions, Dictionaries, Lists, if/else, tkinter GUI
+"""
+
+import tkinter as tk
+from tkinter import ttk
+
+# ─────────────────────────────────────
+#  SEMESTER STRUCTURE  (Dictionary)
+# ─────────────────────────────────────
+
+SEMESTERS = {
+    "Semester 1": {
+        "major":    ["Major 1"],
+        "minor":    ["Minor 1", "Minor 2"],
+        "language": ["Language 1", "Language 2", "Language 3"],
+    },
+    "Semester 2": {
+        "major":    ["Major 1"],
+        "minor":    ["Minor 1", "Minor 2"],
+        "language": ["Language 1", "Language 2", "Language 3"],
+    },
+    "Semester 3": {
+        "major":    ["Major 1", "Major 2"],
+        "minor":    ["Minor 1", "Minor 2"],
+        "language": ["Language 1", "Language 2"],
+    },
+    "Semester 4": {
+        "major":    ["Major 1", "Major 2", "Major 3"],
+        "minor":    [],
+        "language": ["Language 1", "Language 2", "Language 3"],
+    },
+    "Semester 5": {
+        "major":    ["Major 1", "Major 2", "Major 3", "Major 4", "Major 5", "Major 6"],
+        "minor":    [],
+        "language": [],
+    },
+    "Semester 6": {
+        "major":    ["Major 1", "Major 2", "Major 3", "Major 4", "Major 5", "Major 6"],
+        "minor":    [],
+        "language": [],
+    },
+}
+
+# Max marks per type
+MAX_MAJOR    = 100
+MAX_MINOR    = 100
+MAX_LANGUAGE = 75
+
+# Credits per type (for SGPA weight)
+CREDITS = {
+    "major":    4,
+    "minor":    3,
+    "language": 2,
+}
+
+# ─────────────────────────────────────
+#  COLOURS & FONTS
+# ─────────────────────────────────────
+
+BG      = "#f5f6fa"
+WHITE   = "#ffffff"
+DARK    = "#2c3e50"
+BLUE    = "#2980b9"
+LBLUE   = "#3498db"
+GREEN   = "#27ae60"
+YELLOW  = "#f39c12"
+RED     = "#e74c3c"
+PURPLE  = "#8e44ad"
+GRAY    = "#95a5a6"
+PANEL   = "#dfe6e9"
+GOLD    = "#f1c40f"
+
+# 
+#  F1 Convert mark to grade point (out of 10)
+# 
+
+def get_grade_point(mark, max_mark):
+    percentage = (mark / max_mark) * 100
+    if percentage >= 90:
+        return 10.0
+    elif percentage >= 80:
+        return 9.0
+    elif percentage >= 70:
+        return 8.0
+    elif percentage >= 60:
+        return 7.0
+    elif percentage >= 50:
+        return 6.0
+    elif percentage >= 40:
+        return 5.0
+    else:
+        return 0.0   # Fail
+
+
+# 
+#  F2 Get letter grade
+# 
+
+def get_letter_grade(grade_point):
+    if grade_point == 10.0:
+        return "O"       
+    elif grade_point == 9.0:
+        return "A+"
+    elif grade_point == 8.0:
+        return "A"
+    elif grade_point == 7.0:
+        return "B+"
+    elif grade_point == 6.0:
+        return "B"
+    elif grade_point == 5.0:
+        return "C"
+    else:
+        return "F"       
+
+
+# 
+#  F3 Calculate SGPA
+# 
+
+def calculate_sgpa(grade_points_and_credits):
+    total_credit_points = 0
+    total_credits       = 0
+    for gp, credit in grade_points_and_credits:
+        total_credit_points += gp * credit
+        total_credits       += credit
+    if total_credits == 0:
+        return 0.0
+    sgpa = total_credit_points / total_credits
+    return round(sgpa, 2)
+
+
+#
+#  F4 Get compliment based on SGPA
+#
+
+def get_compliment(sgpa):
+    if sgpa >= 9.5:
+        return "Outstanding! You are a topper!", GOLD
+    elif sgpa >= 9.0:
+        return "Excellent! Keep up the great work!", GREEN
+    elif sgpa >= 8.0:
+        return "Very Good! You're doing great!", LBLUE
+    elif sgpa >= 7.0:
+        return "Good! A little more effort and you'll shine!", BLUE
+    elif sgpa >= 6.0:
+        return "Average. Study harder next semester!", YELLOW
+    elif sgpa >= 5.0:
+        return  "Just passed. Please focus more on studies.", YELLOW
+    else:
+        return " Failed. Don't give up, work harder!", RED
+
+
+#
+#  F5  Build entry fields for selected sem
+#
+
+def build_entry_fields(sem_name):
+    for widget in entries_frame.winfo_children():
+        widget.destroy()
+    entry_vars.clear()
+
+    sem_data = SEMESTERS[sem_name]
+
+    row = 0
+
+    tk.Label(entries_frame, text="Course", font=("Arial", 10, "bold"),
+             bg=WHITE, fg=DARK, width=22, anchor="w").grid(row=row, column=0, padx=8, pady=4)
+    tk.Label(entries_frame, text="Max", font=("Arial", 10, "bold"),
+             bg=WHITE, fg=DARK, width=6).grid(row=row, column=1, padx=4)
+    tk.Label(entries_frame, text="Your Mark", font=("Arial", 10, "bold"),
+             bg=WHITE, fg=DARK, width=10).grid(row=row, column=2, padx=4)
+    tk.Label(entries_frame, text="Grade", font=("Arial", 10, "bold"),
+             bg=WHITE, fg=DARK, width=8).grid(row=row, column=3, padx=4)
+    row += 1
+
+    tk.Frame(entries_frame, bg=BLUE, height=1).grid(
+        row=row, column=0, columnspan=4, sticky="ew", padx=8, pady=2)
+    row += 1
+
+    # Major courses
+    if sem_data["major"]:
+        tk.Label(entries_frame, text="── MAJOR COURSES (out of 100) ──",
+                 font=("Arial", 9, "bold"), bg=WHITE, fg=BLUE).grid(
+                 row=row, column=0, columnspan=4, pady=(8,2), padx=8, sticky="w")
+        row += 1
+        for name in sem_data["major"]:
+            row = add_entry_row(row, name, "major", MAX_MAJOR)
+
+    # Minor courses
+    if sem_data["minor"]:
+        tk.Label(entries_frame, text="── MINOR COURSES (out of 100) ──",
+                 font=("Arial", 9, "bold"), bg=WHITE, fg=PURPLE).grid(
+                 row=row, column=0, columnspan=4, pady=(8,2), padx=8, sticky="w")
+        row += 1
+        for name in sem_data["minor"]:
+            row = add_entry_row(row, name, "minor", MAX_MINOR)
+
+    # Language courses
+    if sem_data["language"]:
+        tk.Label(entries_frame, text="── LANGUAGE COURSES (out of 75) ──",
+                 font=("Arial", 9, "bold"), bg=WHITE, fg=GREEN).grid(
+                 row=row, column=0, columnspan=4, pady=(8,2), padx=8, sticky="w")
+        row += 1
+        for name in sem_data["language"]:
+            row = add_entry_row(row, name, "language", MAX_LANGUAGE)
+
+    # Clear result when sem changes
+    result_frame.config(bg=BG)
+    for w in result_frame.winfo_children():
+        w.destroy()
+
+
+# ─────────────────────────────────────
+#  FUNCTION 6 — Add one entry row
+# ─────────────────────────────────────
+
+def add_entry_row(row, course_name, course_type, max_mark):
+    # Course label
+    tk.Label(entries_frame, text=course_name,
+             font=("Arial", 11), bg=WHITE, fg=DARK,
+             width=22, anchor="w").grid(row=row, column=0, padx=8, pady=3)
+
+    # Max mark label
+    tk.Label(entries_frame, text=str(max_mark),
+             font=("Arial", 11), bg=WHITE, fg=GRAY,
+             width=6).grid(row=row, column=1, padx=4)
+
+    # Entry box
+    var = tk.StringVar()
+    entry = tk.Entry(entries_frame, textvariable=var,
+                     font=("Arial", 11), width=10,
+                     bd=1, relief="solid", justify="center")
+    entry.grid(row=row, column=2, padx=4, pady=3)
+
+    # Grade display label (updates live)
+    grade_lbl = tk.Label(entries_frame, text="—",
+                          font=("Arial", 11, "bold"),
+                          bg=WHITE, fg=GRAY, width=8)
+    grade_lbl.grid(row=row, column=3, padx=4)
+
+    # Live grade update on keypress
+    def update_grade(*args):
+        try:
+            mark = float(var.get())
+            if 0 <= mark <= max_mark:
+                gp = get_grade_point(mark, max_mark)
+                gl = get_letter_grade(gp)
+                grade_lbl.config(text=f"{gl} ({gp})", fg=grade_color(gp))
+            else:
+                grade_lbl.config(text="!", fg=RED)
+        except:
+            grade_lbl.config(text="—", fg=GRAY)
+
+    var.trace("w", update_grade)
+
+    # Store entry info
+    entry_vars.append({
+        "name":       course_name,
+        "type":       course_type,
+        "max_mark":   max_mark,
+        "var":        var,
+        "grade_lbl":  grade_lbl,
+    })
+
+    return row + 1
+
+
+
+
+# ─────────────────────────────────────
+#  FUNCTION 7 — Calculate SGPA on button click
+# ─────────────────────────────────────
+
+def on_calculate():
+    gp_credit_list = []
+    has_fail       = False
+    errors         = []
+
+    for item in entry_vars:
+        raw = item["var"].get().strip()
+
+        # Check empty
+        if raw == "":
+            errors.append(f"{item['name']} is empty!")
+            continue
+
+        try:
+            mark = float(raw)
+        except ValueError:
+            errors.append(f"{item['name']}: invalid number!")
+            continue
+
+        # Check range
+        if mark < 0 or mark > item["max_mark"]:
+            errors.append(f"{item['name']}: must be 0–{item['max_mark']}!")
+            continue
+
+        gp     = get_grade_point(mark, item["max_mark"])
+        credit = CREDITS[item["type"]]
+        gp_credit_list.append((gp, credit))
+
+        if gp == 0.0:
+            has_fail = True
+
+    # Show errors if any
+    if errors:
+        show_error("\n".join(errors))
+        return
+
+    # Calculate SGPA
+    sgpa             = calculate_sgpa(gp_credit_list)
+    compliment, col  = get_compliment(sgpa)
+
+    # Show result
+    show_result_panel(sgpa, compliment, col, has_fail)
+
+
+# ─────────────────────────────────────
+#  FUNCTION 8 — Show result panel
+# ─────────────────────────────────────
+
+def show_result_panel(sgpa, compliment, col, has_fail):
+    for w in result_frame.winfo_children():
+        w.destroy()
+
+    result_frame.config(bg=WHITE)
+
+    sem = sem_var.get()
+    tk.Label(result_frame, text=f"── {sem} Result ──",
+             font=("Arial", 11, "bold"), bg=WHITE, fg=GRAY).pack(pady=(10, 2))
+
+    tk.Label(result_frame, text=f"SGPA :  {sgpa} / 10",
+             font=("Arial", 22, "bold"), bg=WHITE, fg=col).pack()
+
+    # Letter grade for overall
+    overall_grade = get_letter_grade(sgpa) if sgpa >= 5 else "F"
+    tk.Label(result_frame, text=f"Grade :  {overall_grade}",
+             font=("Arial", 15, "bold"), bg=WHITE, fg=col).pack()
+
+    if has_fail:
+        tk.Label(result_frame,
+                 text="⚠️  You have failed in one or more subjects!",
+                 font=("Arial", 10, "bold"), bg=WHITE, fg=RED).pack(pady=2)
+
+    tk.Label(result_frame, text=compliment,
+             font=("Arial", 11), bg=WHITE, fg=col,
+             wraplength=400, justify="center").pack(pady=(4, 10))
+
+
+# ─────────────────────────────────────
+#  FUNCTION 9 — Show error message
+# ─────────────────────────────────────
+
+def show_error(msg):
+    for w in result_frame.winfo_children():
+        w.destroy()
+    result_frame.config(bg=WHITE)
+    tk.Label(result_frame, text="⚠️  Please fix these errors:",
+             font=("Arial", 11, "bold"), bg=WHITE, fg=RED).pack(pady=(8, 2))
+    tk.Label(result_frame, text=msg,
+             font=("Arial", 10), bg=WHITE, fg=RED,
+             justify="left").pack(padx=10, pady=(0, 8))
+
+
+# ─────────────────────────────────────
+#  FUNCTION 10 — Clear all
+# ─────────────────────────────────────
+
+def on_clear():
+    for item in entry_vars:
+        item["var"].set("")
+        item["grade_lbl"].config(text="—", fg=GRAY)
+    for w in result_frame.winfo_children():
+        w.destroy()
+    result_frame.config(bg=BG)
+
+
+# ─────────────────────────────────────
+#  FUNCTION 11 — On semester change
+# ─────────────────────────────────────
+
+def on_sem_change(*args):
+    build_entry_fields(sem_var.get())
+
+
+# ─────────────────────────────────────
+#  MAIN WINDOW
+# ─────────────────────────────────────
+
+root = tk.Tk()
+root.title("'67 University SGPA Calculator")
+root.geometry("560x700")
+root.resizable(False, False)
+root.configure(bg=BG)
+
+# ── Header ────────────────────────────
+header = tk.Frame(root, bg=DARK)
+header.pack(fill="x")
+
+tk.Label(header, text="'67 University",
+         font=("Arial", 11), bg=DARK, fg=GRAY).pack(pady=(10, 0))
+tk.Label(header, text="SGPA Calculator",
+         font=("Arial", 20, "bold"), bg=DARK, fg=WHITE).pack()
+tk.Label(header, text="BSc CS — Python Assignment",
+         font=("Arial", 9), bg=DARK, fg=GRAY).pack(pady=(0, 10))
+
+# ── Semester Selector ─────────────────
+sel_frame = tk.Frame(root, bg=BG)
+sel_frame.pack(fill="x", padx=20, pady=12)
+
+tk.Label(sel_frame, text="Select Semester :",
+         font=("Arial", 13, "bold"), bg=BG, fg=DARK).pack(side="left", padx=(0, 10))
+
+sem_var = tk.StringVar(value="Semester 1")
+sem_menu = ttk.Combobox(sel_frame, textvariable=sem_var,
+                         values=list(SEMESTERS.keys()),
+                         font=("Arial", 12), width=16, state="readonly")
+sem_menu.pack(side="left")
+sem_var.trace("w", on_sem_change)
+
+# ── Entries area ──────────────────────
+canvas_frame = tk.Frame(root, bg=WHITE, bd=1, relief="solid")
+canvas_frame.pack(fill="both", padx=20, expand=False)
+
+canvas     = tk.Canvas(canvas_frame, bg=WHITE, highlightthickness=0, height=310)
+scrollbar  = tk.Scrollbar(canvas_frame, orient="vertical", command=canvas.yview)
+canvas.configure(yscrollcommand=scrollbar.set)
+
+scrollbar.pack(side="right", fill="y")
+canvas.pack(side="left", fill="both", expand=True)
+
+entries_frame = tk.Frame(canvas, bg=WHITE)
+canvas_window = canvas.create_window((0, 0), window=entries_frame, anchor="nw")
+
+def on_frame_resize(event):
+    canvas.configure(scrollregion=canvas.bbox("all"))
+
+entries_frame.bind("<Configure>", on_frame_resize)
+
+entry_vars = []   # List to store all entry info
+
+# ── Buttons ───────────────────────────
+btn_frame = tk.Frame(root, bg=BG)
+btn_frame.pack(pady=12)
+
+tk.Button(btn_frame, text="  Calculate SGPA  ",
+          font=("Arial", 13, "bold"),
+          bg=BLUE, fg=WHITE,
+          relief="flat", cursor="hand2", pady=8,
+          command=on_calculate).pack(side="left", padx=8)
+
+tk.Button(btn_frame, text="  Clear  ",
+          font=("Arial", 13, "bold"),
+          bg=GRAY, fg=WHITE,
+          relief="flat", cursor="hand2", pady=8,
+          command=on_clear).pack(side="left", padx=8)
+
+# ── Result Panel ──────────────────────
+result_frame = tk.Frame(root, bg=BG, bd=1, relief="solid")
+result_frame.pack(fill="x", padx=20, pady=(0, 16))
+
+# ── Load default sem ──────────────────
+build_entry_fields("Semester 1")
+
+root.mainloop()
